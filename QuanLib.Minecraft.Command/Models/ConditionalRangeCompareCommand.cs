@@ -1,6 +1,7 @@
 ﻿using QuanLib.Game;
 using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 namespace QuanLib.Minecraft.Command.Models
 {
     public class ConditionalRangeCompareCommand(LanguageManager languageManager) :
-        ConditionalCommand(TextTemplate.Parse("execute if blocks %s %s %s %s %s %s %s %s %s %s"), languageManager),
+        ConditionalCommand(LanguageTemplate.Parse("execute if blocks %s %s %s %s %s %s %s %s %s %s"), languageManager),
         ICreatible<ConditionalRangeCompareCommand>
     {
         public bool TrySendCommand<T>(CommandSender sender, T startPos, T endPos, T destPos, string mode, out int result) where T : IVector3<int>

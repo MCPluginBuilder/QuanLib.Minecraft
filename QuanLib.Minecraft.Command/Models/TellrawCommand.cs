@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,13 +13,13 @@ namespace QuanLib.Minecraft.Command.Models
     {
         public TellrawCommand()
         {
-            Input = TextTemplate.Parse("tellraw %s %s");
-            Output = TextTemplate.Parse("%s");
+            Input = LanguageTemplate.Parse("tellraw %s %s");
+            Output = LanguageTemplate.Parse("%s");
         }
 
-        public override TextTemplate Input { get; }
+        public override LanguageTemplate Input { get; }
 
-        public override TextTemplate Output { get; }
+        public override LanguageTemplate Output { get; }
 
         public bool TrySendCommand(CommandSender sender, string target, string message)
         {

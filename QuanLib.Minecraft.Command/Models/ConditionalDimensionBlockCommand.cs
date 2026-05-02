@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 namespace QuanLib.Minecraft.Command.Models
 {
     public class ConditionalDimensionBlockCommand(LanguageManager languageManager) :
-        ConditionalCommand(TextTemplate.Parse("execute in %s if block %s %s %s %s"), languageManager),
+        ConditionalCommand(LanguageTemplate.Parse("execute in %s if block %s %s %s %s"), languageManager),
         ICreatible<ConditionalDimensionBlockCommand>
     {
         public bool TrySendCommand(CommandSender sender, string dimension, int x, int y, int z, string blockId, out bool result)

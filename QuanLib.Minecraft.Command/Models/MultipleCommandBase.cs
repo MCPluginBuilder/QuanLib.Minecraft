@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -11,7 +12,7 @@ namespace QuanLib.Minecraft.Command.Models
 {
     public abstract class MultipleCommandBase : CommandBase<int>
     {
-        public abstract TextTemplate MultipleOutput { get; }
+        public abstract LanguageTemplate MultipleOutput { get; }
 
         protected override bool TryMatchOutput(string output, [MaybeNullWhen(false)] out string[] outargs)
         {

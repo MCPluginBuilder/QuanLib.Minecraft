@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Building;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +13,10 @@ namespace QuanLib.Minecraft.Command.Models
     {
         public TimeQueryDayCommand(LanguageManager languageManager) : base(languageManager)
         {
-            Input = TextTemplate.Parse("time query day");
+            Input = LanguageTemplate.Parse("time query day");
         }
 
-        public override TextTemplate Input { get; }
+        public override LanguageTemplate Input { get; }
 
         public static TimeQueryDayCommand Create(LanguageManager languageManager)
         {

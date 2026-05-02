@@ -1,4 +1,4 @@
-﻿using QuanLib.Minecraft.ResourcePack.Language;
+﻿using QuanLib.Minecraft.Resource;
 using System;
 using System.Collections.Generic;
 using System.Linq;

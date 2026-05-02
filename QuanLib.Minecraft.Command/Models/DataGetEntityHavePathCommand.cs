@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -13,10 +14,10 @@ namespace QuanLib.Minecraft.Command.Models
     {
         public DataGetEntityHavePathCommand(LanguageManager languageManager) : base(languageManager)
         {
-            Input = TextTemplate.Parse("data get entity %s %s");
+            Input = LanguageTemplate.Parse("data get entity %s %s");
         }
 
-        public override TextTemplate Input { get; }
+        public override LanguageTemplate Input { get; }
 
         public bool TrySendCommand(CommandSender sender, string target, string path, [MaybeNullWhen(false)] out string result)
         {

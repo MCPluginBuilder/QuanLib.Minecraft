@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -16,12 +17,12 @@ namespace QuanLib.Minecraft.Command.Models
             ArgumentNullException.ThrowIfNull(languageManager, nameof(languageManager));
 
             Output = languageManager["commands.scoreboard.players.get.success"];
-            Input = TextTemplate.Parse("scoreboard players get %s %s");
+            Input = LanguageTemplate.Parse("scoreboard players get %s %s");
         }
 
-        public override TextTemplate Input { get; }
+        public override LanguageTemplate Input { get; }
 
-        public override TextTemplate Output { get; }
+        public override LanguageTemplate Output { get; }
 
         public bool TrySendCommand(CommandSender sender, string target, string objective, out int result)
         {

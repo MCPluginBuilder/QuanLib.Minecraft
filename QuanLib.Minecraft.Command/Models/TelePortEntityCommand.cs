@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -17,14 +18,14 @@ namespace QuanLib.Minecraft.Command.Models
 
             MultipleOutput = languageManager["commands.teleport.success.entity.multiple"];
             Output = languageManager["commands.teleport.success.entity.single"];
-            Input = TextTemplate.Parse("%s tp %s");
+            Input = LanguageTemplate.Parse("%s tp %s");
         }
 
-        public override TextTemplate Input { get; }
+        public override LanguageTemplate Input { get; }
 
-        public override TextTemplate Output { get; }
+        public override LanguageTemplate Output { get; }
 
-        public override TextTemplate MultipleOutput { get; }
+        public override LanguageTemplate MultipleOutput { get; }
 
         public bool TrySendCommand(CommandSender sender, string source, string target, out int result)
         {

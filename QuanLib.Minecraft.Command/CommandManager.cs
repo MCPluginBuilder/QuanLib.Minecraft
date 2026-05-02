@@ -8,7 +8,8 @@ using QuanLib.Minecraft.Command.Models;
 using QuanLib.Minecraft.NBT.Models;
 using QuanLib.Minecraft.Command.Senders;
 using QuanLib.Minecraft.NBT;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using QuanLib.Game;
 using System.ComponentModel;
 
@@ -996,7 +997,7 @@ namespace QuanLib.Minecraft.Command
         public static ConditionalCommand Conditional(this Building.ExecuteCommandSyntax source)
         {
             string command = source.Build();
-            return new ConditionalCommand(TextTemplate.Parse(command), _languageManager);
+            return new ConditionalCommand(LanguageTemplate.Parse(command), _languageManager);
         }
     }
 }

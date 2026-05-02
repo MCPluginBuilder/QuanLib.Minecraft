@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -13,9 +14,9 @@ namespace QuanLib.Minecraft.Command.Models
     {
         public virtual string? Execute { get; set; }
 
-        public abstract TextTemplate Input { get; }
+        public abstract LanguageTemplate Input { get; }
 
-        public abstract TextTemplate Output { get; }
+        public abstract LanguageTemplate Output { get; }
 
         protected virtual bool TryFormatInput(object[] inargs, [MaybeNullWhen(false)] out string input)
         {

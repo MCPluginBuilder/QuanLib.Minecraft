@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -11,7 +12,7 @@ namespace QuanLib.Minecraft.Command.Models
 {
     public class ConditionalCommand : CommandBase<ConditionalResult>
     {
-        public ConditionalCommand(TextTemplate executeIfCommand, LanguageManager languageManager)
+        public ConditionalCommand(LanguageTemplate executeIfCommand, LanguageManager languageManager)
         {
             ArgumentNullException.ThrowIfNull(executeIfCommand, nameof(executeIfCommand));
 
@@ -22,15 +23,15 @@ namespace QuanLib.Minecraft.Command.Models
             FailedCountOutput = languageManager["commands.execute.conditional.fail_count"];
         }
 
-        public override TextTemplate Input { get; }
+        public override LanguageTemplate Input { get; }
 
-        public override TextTemplate Output { get; }
+        public override LanguageTemplate Output { get; }
 
-        public TextTemplate SuccessCountOutput { get; }
+        public LanguageTemplate SuccessCountOutput { get; }
 
-        public TextTemplate FailedOutput { get; }
+        public LanguageTemplate FailedOutput { get; }
 
-        public TextTemplate FailedCountOutput { get; }
+        public LanguageTemplate FailedCountOutput { get; }
 
         public virtual bool TrySendCommand(CommandSender sender, out ConditionalResult result)
         {

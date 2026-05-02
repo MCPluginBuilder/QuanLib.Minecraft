@@ -1,4 +1,4 @@
-﻿using QuanLib.Minecraft.ResourcePack.Language;
+﻿using QuanLib.Minecraft.Resource;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -17,7 +17,7 @@ namespace QuanLib.Minecraft.Command.Models
             Output = languageManager["commands.data.entity.query"];
         }
 
-        public override TextTemplate Output { get; }
+        public override LanguageTemplate Output { get; }
 
         protected override bool TryParseResult(string[] outargs, [MaybeNullWhen(false)] out string result)
         {

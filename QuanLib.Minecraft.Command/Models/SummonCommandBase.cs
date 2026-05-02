@@ -1,4 +1,4 @@
-﻿using QuanLib.Minecraft.ResourcePack.Language;
+﻿using QuanLib.Minecraft.Resource;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +16,6 @@ namespace QuanLib.Minecraft.Command.Models
             Output = languageManager["commands.summon.success"];
         }
 
-        public override TextTemplate Output { get; }
+        public override LanguageTemplate Output { get; }
     }
 }

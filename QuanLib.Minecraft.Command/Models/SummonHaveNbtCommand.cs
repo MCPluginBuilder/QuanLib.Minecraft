@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,10 +13,10 @@ namespace QuanLib.Minecraft.Command.Models
     {
         public SummonHaveNbtCommand(LanguageManager languageManager) : base(languageManager)
         {
-            Input = TextTemplate.Parse("summon %s %s %s %s %s");
+            Input = LanguageTemplate.Parse("summon %s %s %s %s %s");
         }
 
-        public override TextTemplate Input { get; }
+        public override LanguageTemplate Input { get; }
 
         public bool TrySendCommand(CommandSender sender, double x, double y, double z, string entityId, string nbt)
         {

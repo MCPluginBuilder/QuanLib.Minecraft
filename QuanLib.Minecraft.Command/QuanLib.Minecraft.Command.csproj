@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\QuanLib.Minecraft.NBT\QuanLib.Minecraft.NBT.csproj" />
-    <ProjectReference Include="..\QuanLib.Minecraft.ResourcePack\QuanLib.Minecraft.ResourcePack.csproj" />
+    <ProjectReference Include="..\QuanLib.Minecraft.Resource\QuanLib.Minecraft.Resource.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
 ﻿using QuanLib.Game;
 using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 namespace QuanLib.Minecraft.Command.Models
 {
     public class ConditionalRangeBlockCommand(LanguageManager languageManager) :
-        ConditionalCommand(TextTemplate.Parse("execute if blocks %s %s %s %s %s %s %s %s %s masked"), languageManager),
+        ConditionalCommand(LanguageTemplate.Parse("execute if blocks %s %s %s %s %s %s %s %s %s masked"), languageManager),
         ICreatible<ConditionalRangeBlockCommand>
     {
         public bool TrySendCommand(CommandSender sender, int startX, int startY, int startZ, int endX, int endY, int endZ, out int result)

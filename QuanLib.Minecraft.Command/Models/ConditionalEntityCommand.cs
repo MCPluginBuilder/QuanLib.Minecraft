@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 namespace QuanLib.Minecraft.Command.Models
 {
     public class ConditionalEntityCommand(LanguageManager languageManager) :
-        ConditionalCommand(TextTemplate.Parse("execute if entity %s"), languageManager),
+        ConditionalCommand(LanguageTemplate.Parse("execute if entity %s"), languageManager),
         ICreatible<ConditionalEntityCommand>
     {
         public bool TrySendCommand(CommandSender sender, string target, out int result)

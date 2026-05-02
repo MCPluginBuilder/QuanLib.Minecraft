@@ -1,5 +1,5 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -18,7 +18,7 @@ namespace QuanLib.Minecraft.Command.Models
             Output = languageManager["commands.time.query"];
         }
 
-        public override TextTemplate Output { get; }
+        public override LanguageTemplate Output { get; }
 
         public virtual bool TrySendCommand(CommandSender sender, out int result)
         {

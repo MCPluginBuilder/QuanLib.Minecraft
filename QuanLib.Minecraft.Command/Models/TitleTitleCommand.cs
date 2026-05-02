@@ -1,5 +1,6 @@
 ﻿using QuanLib.Minecraft.Command.Senders;
-using QuanLib.Minecraft.ResourcePack.Language;
+using QuanLib.Minecraft.Resource;
+using QuanLib.Minecraft.Resource.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -17,14 +18,14 @@ namespace QuanLib.Minecraft.Command.Models
 
             MultipleOutput = languageManager["commands.title.show.title.multiple"];
             Output = languageManager["commands.title.show.title.single"];
-            Input = TextTemplate.Parse("title %s title %s");
+            Input = LanguageTemplate.Parse("title %s title %s");
         }
 
-        public override TextTemplate Input { get; }
+        public override LanguageTemplate Input { get; }
 
-        public override TextTemplate Output { get; }
+        public override LanguageTemplate Output { get; }
 
-        public override TextTemplate MultipleOutput { get; }
+        public override LanguageTemplate MultipleOutput { get; }
 
         public bool TrySendCommand(CommandSender sender, string target, string message, out int result)
         {
