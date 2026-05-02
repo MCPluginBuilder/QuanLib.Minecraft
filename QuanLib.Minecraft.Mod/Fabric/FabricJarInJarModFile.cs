@@ -41,8 +41,7 @@ namespace QuanLib.Minecraft.Mod.Fabric
 
         private static ZipPack ReadJarInJarModFile(ZipPack ownerZip, string filePath)
         {
-            ZipItem zipItem = ownerZip.GetFile(filePath);
-            Stream stream = zipItem.OpenStream();
+            Stream stream = ownerZip.ReadFile(filePath);
             ZipPack zipPack = new(stream);
             return zipPack;
         }

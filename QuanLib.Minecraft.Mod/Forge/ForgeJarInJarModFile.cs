@@ -43,8 +43,7 @@ namespace QuanLib.Minecraft.Mod.Forge
 
         private static ZipPack ReadJarInJarModFile(ZipPack ownerZip, MetadataInfo metadataInfo)
         {
-            ZipItem zipItem = ownerZip.GetFile(metadataInfo.Path);
-            Stream stream = zipItem.OpenStream();
+            Stream stream = ownerZip.ReadFile(metadataInfo.Path);
             ZipPack zipPack = new(stream);
             return zipPack;
         }

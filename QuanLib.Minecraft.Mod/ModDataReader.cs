@@ -53,8 +53,7 @@ namespace QuanLib.Minecraft.Mod
             ArgumentException.ThrowIfNullOrEmpty(filePath, nameof(filePath));
 
             using ZipPack zipPack = new(filePath);
-            ZipItem zipItem = zipPack.GetFile("assets/mod_data.txt");
-            string[] lines = zipItem.ReadAllLines(Encoding.UTF8);
+            string[] lines = zipPack.ReadZipItem("assets/mod_data.txt").ReadAllLines(Encoding.UTF8);
             return FromLinesRead(lines);
         }
     }

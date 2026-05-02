@@ -46,10 +46,10 @@ namespace QuanLib.Minecraft.Mod.Forge
         {
             ArgumentNullException.ThrowIfNull(zipPack, nameof(zipPack));
 
-            if (!zipPack.ExistsFile("META-INF/mods.toml"))
+            if (!zipPack.FileExists("META-INF/mods.toml"))
                 return null;
 
-            using Stream stream = zipPack.GetFile("META-INF/mods.toml").OpenStream();
+            using Stream stream = zipPack.ReadFile("META-INF/mods.toml");
             TomlTable tomlTable = Toml.ReadStream(stream);
             ForgeModFileInfo.DataModel fileInfoModel = tomlTable.Get<ForgeModFileInfo.DataModel>();
 
@@ -68,10 +68,10 @@ namespace QuanLib.Minecraft.Mod.Forge
         {
             ArgumentNullException.ThrowIfNull(zipPack, nameof(zipPack));
 
-            if (!zipPack.ExistsFile("META-INF/jarjar/metadata.json"))
+            if (!zipPack.FileExists("META-INF/jarjar/metadata.json"))
                 return [];
 
-            using Stream stream = zipPack.GetFile("META-INF/jarjar/metadata.json").OpenStream();
+            using Stream stream = zipPack.ReadFile("META-INF/jarjar/metadata.json");
             string text = stream.ReadAllText();
             JObject jObject1 = JObject.Parse(text);
             if (!jObject1.TryGetValue("jars", out var jars) || jars is not JArray jArray)
@@ -94,9 +94,9 @@ namespace QuanLib.Minecraft.Mod.Forge
 
         protected static void ReadVersion(ZipPack zipPack, ForgeModInfo.DataModel modInfoModel)
         {
-            if (modInfoModel.version == "${file.jarVersion}" && zipPack.ExistsFile("META-INF/MANIFEST.MF"))
+            if (modInfoModel.version == "${file.jarVersion}" && zipPack.FileExists("META-INF/MANIFEST.MF"))
             {
-                using Stream stream = zipPack.GetFile("META-INF/MANIFEST.MF").OpenStream();
+                using Stream stream = zipPack.ReadFile("META-INF/MANIFEST.MF");
                 string text = stream.ReadAllText();
                 Dictionary<string, string> imanifest = ManifestParser.Parse(text);
                 if (imanifest.TryGetValue("Implementation-Version", out var version))
