@@ -226,8 +226,8 @@ if (!IsCubeTextures(model))
     continue;
 
 // 应用方块旋转
-if (!blockStateModel.BlockRotate.IsZero)
-    model = new RotatedCubeBlockModel(model, blockStateModel.BlockRotate);
+if (!blockStateModel.BlockRotation.IsZero)
+    model = new RotatedCubeBlockModel(model, blockStateModel.BlockRotation);
 ```
 
 即使单个模型的 `elements` 合格，也必须确保沿整个父模型链能解析出全部 6 个面的纹理；否则该方块被跳过。然后对于带有旋转的 block state（如 `facing=east` 的楼梯），用 `RotatedCubeBlockModel` 装饰器包裹基础模型。
@@ -238,12 +238,12 @@ if (!blockStateModel.BlockRotate.IsZero)
 
 **Resource：** 彻底分离关注点：
 
-1. `IBlockStateParser` → `BlockStateModel[]`（含 `BlockRotate`）
+1. `IBlockStateParser` → `BlockStateModel[]`（含 `BlockRotation`）
 2. `IBlockStateLoader` → `Dictionary<string, BlockStateModel>`（复合键 `"blockid[state=value]"`）
 3. `RotatedCubeBlockModel` 装饰器独立处理旋转
 4. `BlockRotateHelper.RotateFacing` 处理面向旋转数学
 
-新增值类型 `BlockRotate`（`record struct`）简洁替代原有的离散 X/Y 旋转值。
+新增值类型 `BlockRotation`（`record struct`）简洁替代原有的离散 X/Y 旋转值。
 
 ### 3.4 TextureMap 策略模式 → 递归模型解析
 
@@ -285,7 +285,7 @@ TextureMap（抽象基类）
 | `BlockTextureReader`   | 4 个接口 + 4 个实现                                  | 拆分                       |
 | `BlockTextureManager`  | `BlockTextureManager`                              | 增强                       |
 | —                       | `RotatedCubeBlockModel`                            | **新增（装饰器）**   |
-| —                       | `BlockRotate`                                      | **新增（值类型）**   |
+| —                       | `BlockRotation`                                      | **新增（值类型）**   |
 | —                       | `BlockStateModel`                                  | **新增（record）**   |
 | —                       | `BlockRotateHelper`                                | **新增**             |
 | `TextTemplate`         | `LanguageTemplate` + `ILanguageFormatConverter`  | record 化                  |
@@ -418,7 +418,7 @@ public record class LanguageTemplate {
 | 代理模式   | 无                                           | `ReadOnlyImage`                                                              |
 | 工厂模式   | `ISingletonFactory`                        | 保留                                                                           |
 | 扩展方法   | 无                                           | 4 个 Extensions 类                                                             |
-| 记录类型   | 无                                           | `BlockStateModel`, `BlockRotate`, `AssetFileEntry`, `LanguageTemplate` |
+| 记录类型   | 无                                           | `BlockStateModel`, `BlockRotation`, `AssetFileEntry`, `LanguageTemplate` |
 
 ---
 

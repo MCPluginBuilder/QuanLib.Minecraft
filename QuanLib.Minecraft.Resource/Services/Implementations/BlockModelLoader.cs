@@ -48,8 +48,8 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
                 if (!IsCubeTextures(model))
                     continue;
 
-                if (!blockStateModel.BlockRotate.IsZero)
-                    model = new RotatedCubeBlockModel(model, blockStateModel.BlockRotate);
+                if (!blockStateModel.BlockRotation.IsZero)
+                    model = new RotatedCubeBlockModel(model, blockStateModel.BlockRotation);
 
                 result.Add(blockId, model);
             }

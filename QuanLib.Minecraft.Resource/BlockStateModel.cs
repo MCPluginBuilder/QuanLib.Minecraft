@@ -4,5 +4,5 @@ using System.Text;
 
 namespace QuanLib.Minecraft.Resource
 {
-    public record class BlockStateModel(string BlockState, string BlockModel, BlockRotate BlockRotate);
+    public record class BlockStateModel(string BlockState, string BlockModel, BlockRotation BlockRotation);
 }

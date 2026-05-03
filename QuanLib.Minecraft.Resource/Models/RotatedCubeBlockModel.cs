@@ -8,17 +8,17 @@ namespace QuanLib.Minecraft.Resource.Models
 {
     public class RotatedCubeBlockModel : ICubeBlockModel
     {
-        public RotatedCubeBlockModel(ICubeBlockModel owner, BlockRotate blockRotate)
+        public RotatedCubeBlockModel(ICubeBlockModel owner, BlockRotation blockRotation)
         {
             ArgumentNullException.ThrowIfNull(owner, nameof(owner));
 
             _owner = owner;
-            BlockRotate = blockRotate;
+            BlockRotation = blockRotation;
         }
 
         private readonly ICubeBlockModel _owner;
 
-        public BlockRotate BlockRotate { get; }
+        public BlockRotation BlockRotation { get; }
 
         public IObjectModel? Parent => _owner.Parent;
 
@@ -28,16 +28,16 @@ namespace QuanLib.Minecraft.Resource.Models
 
         public bool IsCubeAll => _owner.IsCubeAll;
 
-        public string Down => _owner.GetTextureAtFacing(Facing.Ym, BlockRotate);
+        public string Down => _owner.GetTextureAtFacing(Facing.Ym, BlockRotation);
 
-        public string Up => _owner.GetTextureAtFacing(Facing.Yp, BlockRotate);
+        public string Up => _owner.GetTextureAtFacing(Facing.Yp, BlockRotation);
 
-        public string North => _owner.GetTextureAtFacing(Facing.Zm, BlockRotate);
+        public string North => _owner.GetTextureAtFacing(Facing.Zm, BlockRotation);
 
-        public string East => _owner.GetTextureAtFacing(Facing.Xp, BlockRotate);
+        public string East => _owner.GetTextureAtFacing(Facing.Xp, BlockRotation);
 
-        public string South => _owner.GetTextureAtFacing(Facing.Zp, BlockRotate);
+        public string South => _owner.GetTextureAtFacing(Facing.Zp, BlockRotation);
 
-        public string West => _owner.GetTextureAtFacing(Facing.Xm, BlockRotate);
+        public string West => _owner.GetTextureAtFacing(Facing.Xm, BlockRotation);
     }
 }

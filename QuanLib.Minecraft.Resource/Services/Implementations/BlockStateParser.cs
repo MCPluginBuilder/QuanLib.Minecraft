@@ -32,7 +32,7 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
                 if (rotateX is not (0 or 90 or 180 or 270) || rotateY is not (0 or 90 or 180 or 270))
                     continue;
 
-                BlockStateModel blockStateModel = new(blockState, blockModel, new BlockRotate(rotateX, rotateY));
+                BlockStateModel blockStateModel = new(blockState, blockModel, new BlockRotation(rotateX, rotateY));
                 blockStates.Add(blockStateModel);
             }
 
