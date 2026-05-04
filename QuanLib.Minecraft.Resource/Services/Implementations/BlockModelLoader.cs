@@ -40,6 +40,7 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
             {
                 string blockId = item.Key;
                 BlockStateModel blockStateModel = item.Value;
+                BlockRotation blockRotation = blockStateModel.BlockRotation;
 
                 ICubeBlockModel? model = await LoadModelAsync(blockStateModel.BlockModel, entries, source, exclude);
                 if (model is null)
@@ -48,8 +49,8 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
                 if (!IsCubeTextures(model))
                     continue;
 
-                if (!blockStateModel.BlockRotation.IsZero)
-                    model = new RotatedCubeBlockModel(model, blockStateModel.BlockRotation);
+                if (!blockRotation.IsZero)
+                    model = new RotatedCubeBlockModel(model, BlockRotationMapping.CreateMapping(blockRotation));
 
                 result.Add(blockId, model);
             }

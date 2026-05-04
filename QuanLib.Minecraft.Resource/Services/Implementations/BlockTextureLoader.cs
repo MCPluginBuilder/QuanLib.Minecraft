@@ -6,6 +6,7 @@ using QuanLib.Minecraft.Resource.Models;
 using QuanLib.Minecraft.Resource.Textures;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -34,6 +35,7 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
             {
                 string blockId = item.Key;
                 ICubeBlockModel model = item.Value;
+                IRotatedCubeBlockModel? rotatedModel = model as IRotatedCubeBlockModel;
 
                 foreach (Facing facing in facings)
                 {
@@ -42,6 +44,20 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
                     {
                         Texture texture = textureId == Texture.MISSING_TEXTURE ? missingTexture : await LoadTextureAsync(textureId, entries) ?? missingTexture;
                         texturePool.Textures.Add(textureId, texture);
+                    }
+
+                    if (rotatedModel is not null && !rotatedModel.BlockRotationMapping.IsZero)
+                    {
+                        int textureRotation = rotatedModel.BlockRotationMapping.GetRotationMapping(facing).TextureRotation;
+                        if (textureRotation is 90 or 180 or 270)
+                        {
+                            string rotatedTextureId = $"{textureId}[rotation={textureRotation}]";
+                            if (!texturePool.ContainsKey(rotatedTextureId))
+                            {
+                                Texture texture = new(rotatedTextureId, RotateImage(texturePool[textureId].Image.Clone(), textureRotation));
+                                texturePool.Textures.Add(rotatedTextureId, texture);
+                            }
+                        }
                     }
                 }
 
@@ -72,6 +88,28 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
             {
                 return null;
             }
+        }
+
+        private static Image<Rgba32> RotateImage(Image<Rgba32> image, int rotation)
+        {
+            switch (rotation)
+            {
+                case 0:
+                    break;
+                case 90:
+                    image.Mutate(x => x.Rotate(RotateMode.Rotate90));
+                    break;
+                case 180:
+                    image.Mutate(x => x.Rotate(RotateMode.Rotate180));
+                    break;
+                case 270:
+                    image.Mutate(x => x.Rotate(RotateMode.Rotate270));
+                    break;
+                default:
+                    throw new ArgumentException("Rotation must be 0, 90, 180, or 270 degrees.", nameof(rotation));
+            }
+
+            return image;
         }
     }
 }

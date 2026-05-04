@@ -135,7 +135,7 @@ IObjectModel
 
 - **递归解析：** `BlockModelLoader` / `ItemModelLoader` 递归遍历 `parent` 链，维护 `source` 和 `exclude` 字典处理循环引用与重复解析
 - **纹理引用解析：** `ObjectModelExtensions.GetTexture` 递归解析 `#texture` 引用链
-- **旋转装饰器：** `RotatedCubeBlockModel` 包装 `ICubeBlockModel`，通过 `BlockRotateHelper` 重映射 6 个面的纹理，无需修改基础模型
+- **旋转装饰器：** `RotatedCubeBlockModel` 包装 `ICubeBlockModel`，通过预计算的 `BlockRotationMapping` 重映射 6 个面的纹理，无需修改基础模型
 
 ### 3.2 BlockModelLoader 加载机制详解
 
@@ -226,8 +226,8 @@ if (!IsCubeTextures(model))
     continue;
 
 // 应用方块旋转
-if (!blockStateModel.BlockRotation.IsZero)
-    model = new RotatedCubeBlockModel(model, blockStateModel.BlockRotation);
+if (!blockRotation.IsZero)
+    model = new RotatedCubeBlockModel(model, BlockRotationMapping.CreateMapping(blockRotation));
 ```
 
 即使单个模型的 `elements` 合格，也必须确保沿整个父模型链能解析出全部 6 个面的纹理；否则该方块被跳过。然后对于带有旋转的 block state（如 `facing=east` 的楼梯），用 `RotatedCubeBlockModel` 装饰器包裹基础模型。
@@ -241,9 +241,37 @@ if (!blockStateModel.BlockRotation.IsZero)
 1. `IBlockStateParser` → `BlockStateModel[]`（含 `BlockRotation`）
 2. `IBlockStateLoader` → `Dictionary<string, BlockStateModel>`（复合键 `"blockid[state=value]"`）
 3. `RotatedCubeBlockModel` 装饰器独立处理旋转
-4. `BlockRotateHelper.RotateFacing` 处理面向旋转数学
+4. `BlockRotationMapping.CreateMapping` 和 `RotationMapping` 处理面向旋转数学与纹理旋转
 
 新增值类型 `BlockRotation`（`record struct`）简洁替代原有的离散 X/Y 旋转值。
+
+#### 3.3.1 旋转映射与纹理预旋转
+
+最初的 `RotatedCubeBlockModel` 通过 `BlockRotateHelper.RotateFacing` 在**每次获取纹理时动态计算**朝向映射，且无法处理纹理本身的旋转（如方块旋转后面上纹理方向错误）。本次重构将其替换为 **"预计算映射 + 预旋转纹理"** 两步方案：
+
+**第一步：预计算 RotationMapping**
+
+```
+BlockRotation(X=0/90/180/270, Y=0/90/180/270)
+    → BlockRotationMapping.CreateMapping()
+        → 对 X 轴逐次调用 RotateFromXaxis()
+        → 对 Y 轴逐次调用 RotateFromYaxis()
+            → 每个面的 RotationMapping { SourceFacing, TargetFacing, TextureRotation }
+```
+
+`RotationMapping` 记录"源朝向映射到哪个目标朝向 + 纹理需要旋转多少度"的完整信息。`BlockRotationMapping` 管理全部 6 个面的映射，通过 `RotateFromXaxis` / `RotateFromYaxis` 模拟方块绕轴旋转时各面的重新分配和纹理角度变化。
+
+**第二步：纹理预旋转**
+
+`BlockTextureLoader` 在加载纹理时，检查模型是否为 `IRotatedCubeBlockModel` 且具有非零旋转映射。若是，则克隆原始纹理图像并调用 ImageSharp 的 `Rotate` 进行 90°/180°/270° 旋转，以 `"<textureId>[rotation=N]"` 键名存入 `TexturePool`。`CubeBlockTexture.GetTexture` 同步增加旋转纹理的查找逻辑。
+
+这种设计将旋转计算集中在模型创建阶段，纹理旋转集中在加载阶段，查询时仅做字典查找——消除了运行时动态计算的性能开销，同时修复了原方案中纹理方向不正确的问题。
+
+新增类型：
+- `IRotatedCubeBlockModel`：扩展 `ICubeBlockModel`，暴露 `BlockRotationMapping` 属性
+- `RotationMapping`：值类型，记录 {SourceFacing, TargetFacing, TextureRotation}
+- `BlockRotationMapping`：值类型，管理 6 个面的 `RotationMapping`，提供 `CreateMapping` 工厂方法和旋转操作
+- 删除 `BlockRotateHelper`（其功能已被上述类型取代）
 
 ### 3.4 TextureMap 策略模式 → 递归模型解析
 
@@ -287,7 +315,10 @@ TextureMap（抽象基类）
 | —                       | `RotatedCubeBlockModel`                            | **新增（装饰器）**   |
 | —                       | `BlockRotation`                                      | **新增（值类型）**   |
 | —                       | `BlockStateModel`                                  | **新增（record）**   |
-| —                       | `BlockRotateHelper`                                | **新增**             |
+| —                       | `BlockRotateHelper`                                | **已删除**           |
+| —                       | `RotationMapping`                                  | **新增（值类型）**   |
+| —                       | `BlockRotationMapping`                             | **新增（值类型）**   |
+| —                       | `IRotatedCubeBlockModel`                           | **新增（接口）**     |
 | `TextTemplate`         | `LanguageTemplate` + `ILanguageFormatConverter`  | record 化                  |
 | `LanguageReader`       | `ILanguageTemplateParser`                          | 接口化                     |
 | `LanguageManager`      | `LanguageManager`                                  | 增强                       |
@@ -295,7 +326,7 @@ TextureMap（抽象基类）
 | —                       | `IGeneratedItemModel` / `GeneratedItemModel`     | **新增**             |
 | —                       | `IGeneratedItemTexture` / `GeneratedItemTexture` | **新增**             |
 | —                       | `AssetFileEntry`                                   | **新增**             |
-| —                       | 4 个 Extensions 类                                   | **新增**             |
+| —                       | 4 个 Extensions 类                                   | **新增**（`BlockRotateHelper` 已删除，余 3 个）|
 
 ---
 
@@ -414,10 +445,10 @@ public record class LanguageTemplate {
 | 单例模式   | `BlockTextureManager`, `LanguageManager` | 保留 + 新增 `ItemTextureManager`                                             |
 | 策略模式   | `TextureMap` 层次结构（6 子类）            | 废弃，改用递归模型解析                                                         |
 | 服务接口   | 无                                           | 11 个接口 + 11 个实现                                                          |
-| 装饰器模式 | 无                                           | `RotatedCubeBlockModel`                                                      |
+| 装饰器模式 | 无                                           | `RotatedCubeBlockModel`（内部由 `BlockRotationMapping` 驱动）              |
 | 代理模式   | 无                                           | `ReadOnlyImage`                                                              |
 | 工厂模式   | `ISingletonFactory`                        | 保留                                                                           |
-| 扩展方法   | 无                                           | 4 个 Extensions 类                                                             |
+| 扩展方法   | 无                                           | 3 个 Extensions 类                                                             |
 | 记录类型   | 无                                           | `BlockStateModel`, `BlockRotation`, `AssetFileEntry`, `LanguageTemplate` |
 
 ---
