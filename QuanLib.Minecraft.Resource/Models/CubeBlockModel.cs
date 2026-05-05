@@ -8,7 +8,7 @@ namespace QuanLib.Minecraft.Resource.Models
 {
     public class CubeBlockModel : ICubeBlockModel
     {
-        public CubeBlockModel(string modelId, IReadOnlyDictionary<string, string> textures, IObjectModel? parent = null)
+        public CubeBlockModel(string modelId, IReadOnlyDictionary<string, string> textures, BlockModelElement? element, IObjectModel? parent = null)
         {
             ArgumentException.ThrowIfNullOrEmpty(modelId, nameof(modelId));
             ArgumentNullException.ThrowIfNull(textures, nameof(textures));
@@ -16,7 +16,11 @@ namespace QuanLib.Minecraft.Resource.Models
             ModelId = modelId;
             Textures = textures;
             Parent = parent;
+
+            _element = element;
         }
+
+        private readonly BlockModelElement? _element;
 
         public IObjectModel? Parent { get; }
 
@@ -24,18 +28,33 @@ namespace QuanLib.Minecraft.Resource.Models
 
         public IReadOnlyDictionary<string, string> Textures { get; }
 
+        public BlockModelElement? Element => _element ?? (Parent as ICubeBlockModel)?.Element;
+
         public bool IsCubeAll => Textures.ContainsKey("all");
 
-        public string Down => this.GetTexture("down") ?? Texture.MISSING_TEXTURE;
+        public string Down => FindTexture("down");
 
-        public string Up => this.GetTexture("up") ?? Texture.MISSING_TEXTURE;
+        public string Up => FindTexture("up");
 
-        public string North => this.GetTexture("north") ?? Texture.MISSING_TEXTURE;
+        public string North => FindTexture("north");
 
-        public string East => this.GetTexture("east") ?? Texture.MISSING_TEXTURE;
+        public string East => FindTexture("east");
 
-        public string South => this.GetTexture("south") ?? Texture.MISSING_TEXTURE;
+        public string South => FindTexture("south");
 
-        public string West => this.GetTexture("west") ?? Texture.MISSING_TEXTURE;
+        public string West => FindTexture("west");
+
+        private string FindTexture(string face)
+        {
+            BlockModelElement? element = Element;
+            if (element is not null)
+                face = element.Faces.AllFaces.GetValueOrDefault(face)?.Texture ?? face;
+
+            if (face == BlockFace.MISSINGNO)
+                return Texture.MISSING_TEXTURE;
+
+            face = face.TrimStart('#');
+            return this.GetTexture(face) ?? Texture.MISSING_TEXTURE;
+        }
     }
 }

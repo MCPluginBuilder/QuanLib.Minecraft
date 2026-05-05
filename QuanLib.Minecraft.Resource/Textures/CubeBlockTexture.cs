@@ -31,16 +31,10 @@ namespace QuanLib.Minecraft.Resource.Textures
         public Texture GetTexture(Facing facing)
         {
             string textureId = AssetHelper.GetFullName(_model.GetTextureAtFacing(facing));
+            int textureRotation = _model.GetTextureRotation(facing);
+            string rotatedTextureId = textureRotation == 0 ? textureId : $"{textureId}[rotation={textureRotation}]";
 
-            if (_model is IRotatedCubeBlockModel rotatedModel && !rotatedModel.BlockRotationMapping.IsZero)
-            {
-                int textureRotation = rotatedModel.BlockRotationMapping.GetRotationMapping(facing).TextureRotation;
-                string rotatedTextureId = $"{textureId}[rotation={textureRotation}]";
-                if (_texturePool.TryGetValue(rotatedTextureId, out var rotatedTexture))
-                    return rotatedTexture;
-            }
-
-            if (_texturePool.TryGetValue(textureId, out var texture))
+            if (_texturePool.TryGetValue(rotatedTextureId, out var texture))
                 return texture;
 
             return _texturePool[Texture.MISSING_TEXTURE];

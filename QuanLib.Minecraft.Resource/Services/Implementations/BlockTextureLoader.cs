@@ -35,7 +35,6 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
             {
                 string blockId = item.Key;
                 ICubeBlockModel model = item.Value;
-                IRotatedCubeBlockModel? rotatedModel = model as IRotatedCubeBlockModel;
 
                 foreach (Facing facing in facings)
                 {
@@ -46,17 +45,14 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
                         texturePool.Textures.Add(textureId, texture);
                     }
 
-                    if (rotatedModel is not null && !rotatedModel.BlockRotationMapping.IsZero)
+                    int textureRotation = model.GetTextureRotation(facing);
+                    if (textureRotation is 90 or 180 or 270)
                     {
-                        int textureRotation = rotatedModel.BlockRotationMapping.GetRotationMapping(facing).TextureRotation;
-                        if (textureRotation is 90 or 180 or 270)
+                        string rotatedTextureId = $"{textureId}[rotation={textureRotation}]";
+                        if (!texturePool.ContainsKey(rotatedTextureId))
                         {
-                            string rotatedTextureId = $"{textureId}[rotation={textureRotation}]";
-                            if (!texturePool.ContainsKey(rotatedTextureId))
-                            {
-                                Texture texture = new(rotatedTextureId, RotateImage(texturePool[textureId].Image.Clone(), textureRotation));
-                                texturePool.Textures.Add(rotatedTextureId, texture);
-                            }
+                            Texture texture = new(rotatedTextureId, RotateImage(texturePool[textureId].Image.Clone(), textureRotation));
+                            texturePool.Textures.Add(rotatedTextureId, texture);
                         }
                     }
                 }

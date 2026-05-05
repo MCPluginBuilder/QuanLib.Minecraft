@@ -26,6 +26,8 @@ namespace QuanLib.Minecraft.Resource.Models
 
         public IReadOnlyDictionary<string, string> Textures => _owner.Textures;
 
+        public BlockModelElement? Element => _owner.Element;
+
         public bool IsCubeAll => _owner.IsCubeAll;
 
         public string Down => _owner.GetTextureAtFacing(BlockRotationMapping.YmFacing.TargetFacing);

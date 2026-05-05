@@ -6,6 +6,8 @@ namespace QuanLib.Minecraft.Resource.Models
 {
     public interface ICubeBlockModel : IObjectModel
     {
+        public BlockModelElement? Element { get; }
+
         public bool IsCubeAll { get; }
 
         public string Down { get; }

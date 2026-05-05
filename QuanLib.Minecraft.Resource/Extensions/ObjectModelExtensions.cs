@@ -25,6 +25,30 @@ namespace QuanLib.Minecraft.Resource.Extensions
             };
         }
 
+        public static int GetTextureRotation(this ICubeBlockModel model, Facing facing)
+        {
+            ArgumentNullException.ThrowIfNull(model, nameof(model));
+
+            BlockModelElement? element = model.Element;
+            if (model is IRotatedCubeBlockModel rotatedModel && !rotatedModel.BlockRotationMapping.IsZero)
+            {
+                RotationMapping rotationMapping = rotatedModel.BlockRotationMapping.GetRotationMapping(facing);
+                int textureRotation = rotationMapping.TextureRotation;
+                if (element is not null)
+                {
+                    textureRotation += element.Faces.GetFace(rotationMapping.TargetFacing).Rotation;
+                    textureRotation %= 360;
+                }
+
+                return textureRotation;
+            }
+
+            if (element is not null)
+                return element.Faces.GetFace(facing).Rotation;
+
+            return 0;
+        }
+
         public static string? GetTexture(this IObjectModel model, string face)
         {
             ArgumentNullException.ThrowIfNull(model, nameof(model));

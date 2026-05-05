@@ -1,12 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using QuanLib.Core;
+using QuanLib.Game;
 using QuanLib.IO.Zip;
 using QuanLib.Minecraft.Resource.Extensions;
 using QuanLib.Minecraft.Resource.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace QuanLib.Minecraft.Resource.Services.Implementations
@@ -111,16 +113,16 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
                 }
 
                 Dictionary<string, string> textures = GetTextures(texturesObject);
-                CubeBlockModel result = new(modelId, textures, parentModel);
+                CubeBlockModel result = new(modelId, textures, element: null, parentModel);
                 source.Add(modelId, result);
                 return result;
             }
             else
             {
-                if (jObject["elements"] is JArray elementsJArray && IsCubeElements(elementsJArray))
+                if (jObject["elements"] is JArray elementsJArray && IsCubeElements(elementsJArray, out var element))
                 {
                     Dictionary<string, string> textures = GetTextures(texturesObject);
-                    CubeBlockModel result = new(modelId, textures, null);
+                    CubeBlockModel result = new(modelId, textures, element, parent: null);
                     source.Add(modelId, result);
                     return result;
                 }
@@ -144,8 +146,10 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
             }
         }
 
-        private static bool IsCubeElements(JArray? elementsJArray)
+        private bool IsCubeElements(JArray? elementsJArray, [MaybeNullWhen(false)] out BlockModelElement element)
         {
+            element = null;
+
             if (elementsJArray is null)
                 return false;
 
@@ -155,31 +159,54 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
             if (elementsJArray[0] is not JObject elementsObject)
                 return false;
 
-            if (elementsObject["from"] is not JArray from || elementsObject["to"] is not JArray to)
+            try
+            {
+                var elementObject = elementsObject.ToObject<BlockModelElement.JsonObject>();
+                if (elementObject is null)
+                    return false;
+
+                element = BlockModelElement.CreateFromJson(elementObject);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning("Parsing block model element failed: {Message}", ObjectFormatter.Format(ex));
+                return false;
+            }
+
+            if (element.From != new Vector3<int>(0, 0, 0) || element.To != new Vector3<int>(16, 16, 16))
                 return false;
 
-            if (from.Count != 3 || to.Count != 3)
-                return false;
+            foreach (string faceKey in FaceMaskMap.Keys)
+            {
+                if (!element.Faces.AllFaces.ContainsKey(faceKey))
+                    return false;
+            }
 
-            return from[0].Value<int>() == 0 &&
-                   from[1].Value<int>() == 0 &&
-                   from[2].Value<int>() == 0 &&
-                   to[0].Value<int>() == 16 &&
-                   to[1].Value<int>() == 16 &&
-                   to[2].Value<int>() == 16;
+            foreach (BlockFace face in element.Faces.AllFaces.Values)
+            {
+                if (!face.UV.IsFullUV)
+                    return false;
+            }
+
+            return true;
         }
 
-        private static bool IsCubeTextures(IObjectModel model)
+        private static bool IsCubeTextures(ICubeBlockModel model)
         {
-            return IsCubeTextures(model, AllFacesMask);
+            BlockModelElement? element = model.Element;
+            if (element is null)
+                return false;
+
+            return IsCubeTextures(model, element, AllFacesMask);
         }
 
-        private static bool IsCubeTextures(IObjectModel model, int needsMask)
+        private static bool IsCubeTextures(IObjectModel model, BlockModelElement element, int needsMask)
         {
             // 在当前模型的纹理中清除已找到的面
-            foreach (var item in model.Textures)
+            foreach (var item in element.Faces.AllFaces)
             {
-                if (FaceMaskMap.TryGetValue(item.Key, out int faceMask))
+                if (model.Textures.ContainsKey(item.Value.Texture.TrimStart('#')) &&
+                    FaceMaskMap.TryGetValue(item.Key, out int faceMask))
                 {
                     // 清除这个面对应的 bit
                     needsMask &= ~faceMask;
@@ -190,7 +217,7 @@ namespace QuanLib.Minecraft.Resource.Services.Implementations
 
             // 还有缺失的面，向上查找父模型
             IObjectModel? parent = model.Parent;
-            return parent is not null && IsCubeTextures(parent, needsMask);
+            return parent is not null && IsCubeTextures(parent, element, needsMask);
         }
     }
 }

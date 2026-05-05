@@ -2,7 +2,7 @@
 
 ## 概述
 
-`QuanLib.Minecraft.Resource` 是对 `QuanLib.Minecraft.ResourcePack` 的**完全重构版本**。从源文件规模上看，由 21 个文件扩展至 50 个文件；从架构范式上看，这是一次从脚本式静态代码到企业级可测试架构的根本转变。
+`QuanLib.Minecraft.Resource` 是对 `QuanLib.Minecraft.ResourcePack` 的**完全重构版本**。从源文件规模上看，由 21 个文件扩展至 56 个文件；从架构范式上看，这是一次从脚本式静态代码到企业级可测试架构的根本转变。
 
 ---
 
@@ -144,25 +144,42 @@ IObjectModel
 #### 3.2.1 几何判定：IsCubeElements
 
 ```csharp
-private static bool IsCubeElements(JArray? elementsJArray)
+private bool IsCubeElements(JArray? elementsJArray, [MaybeNullWhen(false)] out BlockModelElement element)
 ```
 
-从模型 JSON 的 `elements` 数组判断该模型在几何上是否为一个完整的立方体。判定条件：
+从模型 JSON 的 `elements` 数组判断该模型在几何上是否为一个完整的立方体，同时将解析出的元素数据结构化为 `BlockModelElement` 输出。判定条件：
 
 1. `elements` 非 null
 2. `elements` 数组恰好包含 **1 个**元素（多元素模型为非标准方块）
-3. 该元素的 `from` 坐标为 `[0, 0, 0]`
-4. 该元素的 `to` 坐标为 `[16, 16, 16]`
+3. 将元素 JSON 反序列化为 `BlockModelElement.JsonObject`，再通过 `BlockModelElement.CreateFromJson` 构造强类型对象（异常则记录日志并返回 false）
+4. 该元素的 `from` 坐标为 `[0, 0, 0]`
+5. 该元素的 `to` 坐标为 `[16, 16, 16]`
+6. 六个面（down/up/north/south/west/east）必须全部存在
+7. 每个面的 UV 必须为完整 UV（`IsFullUV`），不能有自定义 UV 裁剪
 
-只有满足全部条件的才是标准的 CubeBlock——即一个从原点 (0,0,0) 到对角顶点 (16,16,16) 的完整方块。任何偏离（多元素、非满尺寸）的模型均被排除。
+只有满足全部条件的才是标准的 CubeBlock——即一个从原点 (0,0,0) 到对角顶点 (16,16,16) 的完整方块。任何偏离（多元素、非满尺寸、缺面、自定义 UV）的模型均被排除。
+
+与旧版本的关键区别：该方法不再只是返回 bool 的"门卫"，而是通过 `out` 参数将解析出的 `BlockModelElement` 传递给 `CubeBlockModel` 构造函数。Element 成为模型的持久数据，驱动下游的 `FindTexture`（纹理引用解析）和 `GetTextureRotation`（纹理旋转计算）。
 
 #### 3.2.2 纹理完整性判定：IsCubeTextures
 
+使用 **6-bit 位掩码**验证方块模型沿父子链能解析出全部 6 个面的纹理。两个方法重载：
+
 ```csharp
-private static bool IsCubeTextures(IObjectModel model)
+// 公开入口：从模型提取 Element，null 则直接返回 false
+private static bool IsCubeTextures(ICubeBlockModel model)
+{
+    BlockModelElement? element = model.Element;
+    if (element is null)
+        return false;
+    return IsCubeTextures(model, element, AllFacesMask);
+}
+
+// 私有递归：使用 element 的面数据查找纹理
+private static bool IsCubeTextures(IObjectModel model, BlockModelElement element, int needsMask)
 ```
 
-使用 **6-bit 位掩码**验证方块模型的纹理覆盖了全部 6 个面：
+位掩码定义：
 
 ```csharp
 private const int AllFacesMask = (1 << 6) - 1;  // 0b111111
@@ -181,12 +198,13 @@ private static readonly Dictionary<string, int> FaceMaskMap = new()
 算法流程：
 
 1. 初始 `needsMask = 0b111111`（所有 6 位均置 1，表示所有面都缺失）
-2. 遍历当前模型的 `Textures` 字典中的每个键
-3. 若键名在 `FaceMaskMap` 中（即 `down`/`up`/`north`/`south`/`west`/`east`），将对应 bit 清零：`needsMask &= ~faceMask`
-4. 若 `needsMask == 0`（所有面已找到），立即返回 `true`
-5. 若仍有面缺失，沿 `model.Parent` 链向上递归查找
+2. 遍历 `element.Faces.AllFaces` 中的每个面（element 在整个递归链中保持同一引用——都是最底层模型解析出来的那个）
+3. 取该面的 `Texture` 值（去除 `#` 前缀，如 `"#all"` → `"all"`），检查 `model.Textures` 是否包含该纹理键
+4. 若包含且面名在 `FaceMaskMap` 中，将对应 bit 清零：`needsMask &= ~faceMask`
+5. 若 `needsMask == 0`（所有面已找到），立即返回 `true`
+6. 若仍有面缺失，沿 `model.Parent` 链向上递归查找
 
-这种设计允许纹理定义分布在父子模型链上：子模型可能只定义了 `"all"` 键（对应 `IsCubeAll`），但 6 个面的实际纹理通过父模型逐级解析得到。位掩码方案比逐个 `if` 判断更高效且意图明确。
+与旧版本的关键区别：纹理查找不再遍历 `model.Textures` 的键名，而是遍历 `element.Faces` 的面数据。这使得面名与纹理变量名解耦——例如 `"north"` 面引用 `"#all"` 纹理，只需模型定义了 `"all"` 纹理键即可匹配，不再要求纹理变量名恰好等于面名。这种设计也使得父子模型共享同一套 `BlockModelElement` 面定义来验证纹理完整性。
 
 #### 3.2.3 递归加载流程：LoadModelAsync
 
@@ -206,11 +224,11 @@ LoadModelAsync(modelId, entries, source, exclude)
 │      ├── 验证 parent 路径在 block/ 下 → 否则排除
 │      ├── 递归调用 LoadModelAsync 加载父模型
 │      ├── 解析当前模型的 textures 字典
-│      └── 构造 CubeBlockModel(modelId, textures, parentModel)
+│      └── 构造 CubeBlockModel(modelId, textures, element: null, parentModel)
 │
 └── 8. 若 parent 为空或为根模型 "minecraft:block/block"：
-       ├── 调用 IsCubeElements 检查 elements 字段
-       │    ├── 通过 → 构造 CubeBlockModel(modelId, textures, null)（此为根模型）
+       ├── 调用 IsCubeElements 检查 elements 字段，解析出 BlockModelElement
+       │    ├── 通过 → 构造 CubeBlockModel(modelId, textures, element, parent: null)（此为根模型）
        │    └── 未通过 → 加入 exclude，返回 null
 ```
 
@@ -263,9 +281,9 @@ BlockRotation(X=0/90/180/270, Y=0/90/180/270)
 
 **第二步：纹理预旋转**
 
-`BlockTextureLoader` 在加载纹理时，检查模型是否为 `IRotatedCubeBlockModel` 且具有非零旋转映射。若是，则克隆原始纹理图像并调用 ImageSharp 的 `Rotate` 进行 90°/180°/270° 旋转，以 `"<textureId>[rotation=N]"` 键名存入 `TexturePool`。`CubeBlockTexture.GetTexture` 同步增加旋转纹理的查找逻辑。
+`BlockTextureLoader` 和 `CubeBlockTexture` 统一通过 `ObjectModelExtensions.GetTextureRotation(facing)` 扩展方法计算纹理旋转角度。该方法内部综合了 `BlockRotationMapping` 的旋转映射和 `BlockModelElement` 的面级旋转，对外暴露统一接口。若旋转角度为 90°/180°/270°，则克隆原始纹理图像并调用 ImageSharp 的 `Rotate` 进行旋转，以 `"<textureId>[rotation=N]"` 键名存入 `TexturePool`。
 
-这种设计将旋转计算集中在模型创建阶段，纹理旋转集中在加载阶段，查询时仅做字典查找——消除了运行时动态计算的性能开销，同时修复了原方案中纹理方向不正确的问题。
+这种设计将旋转计算集中在模型创建阶段，纹理旋转集中在加载阶段，查询时仅做字典查找——消除了运行时动态计算的性能开销。与早期版本的区别在于，调用方不再需要手动检查 `IRotatedCubeBlockModel` 类型，`GetTextureRotation` 扩展方法内部已统一处理所有旋转来源。
 
 新增类型：
 - `IRotatedCubeBlockModel`：扩展 `ICubeBlockModel`，暴露 `BlockRotationMapping` 属性
@@ -319,6 +337,10 @@ TextureMap（抽象基类）
 | —                       | `RotationMapping`                                  | **新增（值类型）**   |
 | —                       | `BlockRotationMapping`                             | **新增（值类型）**   |
 | —                       | `IRotatedCubeBlockModel`                           | **新增（接口）**     |
+| —                       | `BlockFace`                                        | **新增（record）**   |
+| —                       | `BlockFaces`                                       | **新增**             |
+| —                       | `BlockModelElement`                                | **新增**             |
+| —                       | `UV`                                               | **新增（record struct）** |
 | `TextTemplate`         | `LanguageTemplate` + `ILanguageFormatConverter`  | record 化                  |
 | `LanguageReader`       | `ILanguageTemplateParser`                          | 接口化                     |
 | `LanguageManager`      | `LanguageManager`                                  | 增强                       |
@@ -520,4 +542,4 @@ ZipPack[]
 6. **不可变性：** 关键数据结构使用 `record` 类型，减少状态相关的 bug
 7. **可观测性：** `ILogger` 集成提供结构化日志
 
-重构后的代码虽然文件数增加了 2.3 倍，但每个文件的职责更单一、实现更内聚。接口与实现分离、模型与加载分离、数据与行为分离——这些基础架构决策使项目具备了在生产环境中持续演进的工程基础。
+重构后的代码虽然文件数增加了 2.7 倍，但每个文件的职责更单一、实现更内聚。接口与实现分离、模型与加载分离、数据与行为分离——这些基础架构决策使项目具备了在生产环境中持续演进的工程基础。
